@@ -7,7 +7,7 @@ php:
 
 before_script:
     - composer self-update
-    - composer install --prefer-source --no-interaction
+    - composer install --prefer-source
 
 after_script:
     - wget https://scrutinizer-ci.com/ocular.phar
