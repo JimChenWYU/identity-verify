@@ -37,7 +37,7 @@ class Identity
     /**
      * @var StrategyInterface[]
      */
-    protected $strategies;
+    protected $strategies = [];
 
     /**
      * @var \JimChen\Identity\Messenger
