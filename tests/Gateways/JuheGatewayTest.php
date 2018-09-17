@@ -22,7 +22,6 @@ class JuheGatewayTest extends TestCase
         $config = [
             'openid' => 'juhe12345678',
             'key' => 'mock-api-key',
-            'is_sign' => true,
         ];
 
         $signParams = [
@@ -35,13 +34,13 @@ class JuheGatewayTest extends TestCase
         $sign = md5(join('', $signParams));
 
         $gateway = \Mockery::mock(JuheGateway::class, [$config])->makePartial()->shouldAllowMockingProtectedMethods();
-        $this->assertTrue($gateway->isSign());
+        $this->assertTrue($gateway->isVerifySignature());
         $this->assertSame($sign, $gateway->generateSign($signParams));
 
         $gateway = \Mockery::mock(JuheGateway::class.'[request]', [$config])->shouldAllowMockingProtectedMethods();
 
         $gateway->shouldReceive('getUrl')->withNoArgs()->andReturn(JuheGateway::ENDPOINT_SIGN_URL);
-        $gateway->shouldReceive('isSign')->withNoArgs()->andReturn(true);
+        $gateway->shouldReceive('isVerifySignature')->withNoArgs()->andReturn(true);
         $gateway->shouldReceive('generateSign')->with($signParams)->andReturn($sign);
 
         $gateway->shouldReceive('request')->with(

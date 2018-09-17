@@ -11,7 +11,9 @@
 namespace JimChen\Identity;
 
 use JimChen\Identity\Contracts\GatewayInterface;
+use JimChen\Identity\Contracts\StrategyInterface;
 use JimChen\Identity\Exceptions\InvalidArgumentException;
+use JimChen\Identity\Strategies\OrderStrategy;
 use JimChen\Identity\Support\Config;
 use RuntimeException;
 
@@ -28,9 +30,14 @@ class Identity
     protected $defaultGateway;
 
     /**
-     * @var array
+     * @var GatewayInterface[]
      */
     protected $gateways = [];
+
+    /**
+     * @var StrategyInterface[]
+     */
+    protected $strategies;
 
     /**
      * @var \JimChen\Identity\Messenger
@@ -56,23 +63,20 @@ class Identity
      *
      * @param string $realName
      * @param string $idCard
-     * @param string $gateway
+     * @param array  $gateway
      *
      * @return array
      *
-     * @throws Exceptions\NoGatewayAvailableException
+     * @throws \JimChen\Identity\Exceptions\NoGatewayAvailableException
+     * @throws \JimChen\Identity\Exceptions\InvalidArgumentException
      */
-    public function verify($realName, $idCard, $gateway = '')
+    public function verify($realName, $idCard, array $gateway = [])
     {
         if (empty($gateway)) {
-            $gateway = $this->config->get('default.gateway', '');
+            $gateway = $this->config->get('default.gateways', []);
         }
 
-        if (empty($gateway)) {
-            $gateway = [];
-        }
-
-        return $this->getMessenger()->verify($realName, $idCard, $this->formatGateways(is_array($gateway) ? $gateway : [$gateway]));
+        return $this->getMessenger()->verify($realName, $idCard, $this->formatGateways($gateway));
     }
 
     /**
@@ -93,6 +97,36 @@ class Identity
         }
 
         return $this->gateways[$name];
+    }
+
+    /**
+     * Get a strategy instance.
+     *
+     * @param string|null $strategy
+     *
+     * @return \JimChen\Identity\Contracts\StrategyInterface
+     *
+     * @throws \JimChen\Identity\Exceptions\InvalidArgumentException
+     */
+    public function strategy($strategy = null)
+    {
+        if (is_null($strategy)) {
+            $strategy = $this->config->get('default.strategy', OrderStrategy::class);
+        }
+
+        if (!class_exists($strategy)) {
+            $strategy = __NAMESPACE__ . '\Strategies\\' . ucfirst($strategy);
+        }
+
+        if (!class_exists($strategy)) {
+            throw new InvalidArgumentException("Unsupported strategy \"{$strategy}\"");
+        }
+
+        if (empty($this->strategies[$strategy]) || !($this->strategies[$strategy] instanceof StrategyInterface)) {
+            $this->strategies[$strategy] = new $strategy($this);
+        }
+
+        return $this->strategies[$strategy];
     }
 
     /**
@@ -197,13 +231,15 @@ class Identity
 
         $name = ucfirst(str_replace(['-', '_', ''], '', $name));
 
-        return __NAMESPACE__."\\Gateways\\{$name}Gateway";
+        return __NAMESPACE__ . "\\Gateways\\{$name}Gateway";
     }
 
     /**
      * @param array $gateways
      *
      * @return array
+     *
+     * @throws \JimChen\Identity\Exceptions\InvalidArgumentException
      */
     protected function formatGateways(array $gateways = [])
     {
@@ -223,6 +259,12 @@ class Identity
             }
         }
 
-        return $formatted;
+        $result = [];
+
+        foreach ($this->strategy()->apply($formatted) as $name) {
+            $result[$name] = $formatted[$name];
+        }
+
+        return $result;
     }
 }

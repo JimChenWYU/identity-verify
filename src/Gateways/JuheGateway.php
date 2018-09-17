@@ -42,7 +42,7 @@ class JuheGateway extends Gateway
                 'key'      => $config->get('key', ''),
                 'realname' => $realName,
                 'idcard'   => $idCard,
-            ], $this->isSign() ? [
+            ], $this->isVerifySignature() ? [
                 'sign' => $this->generateSign([
                     'key'      => $config->get('key'),
                     'openid'   => $config->get('openid'),
@@ -66,7 +66,7 @@ class JuheGateway extends Gateway
 
     protected function getUrl()
     {
-        return $this->isSign() ? self::ENDPOINT_SIGN_URL : self::ENDPOINT_COMMON_URL;
+        return $this->isVerifySignature() ? self::ENDPOINT_SIGN_URL : self::ENDPOINT_COMMON_URL;
     }
 
     protected function generateSign($params)
@@ -90,8 +90,13 @@ class JuheGateway extends Gateway
         return md5($params['openid'] . $params['key'] . $params['idcard'] . $params['realname']);
     }
 
-    protected function isSign()
+    /**
+     * 判断是否需要验签
+     *
+     * @return bool
+     */
+    protected function isVerifySignature()
     {
-        return $this->config->get('is_sign', true);
+        return !empty($this->config->get('openid', ''));
     }
 }
