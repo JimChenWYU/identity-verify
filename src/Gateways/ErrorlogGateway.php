@@ -12,7 +12,7 @@ namespace JimChen\Identity\Gateways;
 
 use JimChen\Identity\Support\Config;
 
-class ErrorLogGateway extends Gateway
+class ErrorlogGateway extends Gateway
 {
     /**
      * Verify.
