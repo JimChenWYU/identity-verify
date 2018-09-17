@@ -11,7 +11,6 @@
 namespace Tests\Gateways;
 
 use JimChen\Identity\Exceptions\GatewayErrorException;
-use JimChen\Identity\Exceptions\InvalidIdentityException;
 use JimChen\Identity\Gateways\JuheGateway;
 use JimChen\Identity\Support\Config;
 use PHPUnit\Framework\TestCase;
@@ -90,58 +89,6 @@ class JuheGatewayTest extends TestCase
         ], $gateway->verify('张三', '440701199909091672', $config));
 
         $this->setExpectedException(GatewayErrorException::class, '错误的请求KEY');
-        $gateway->verify('张三', '440701199909091672', $config);
-    }
-
-    public function testInvalidIdentity()
-    {
-        $config = [
-            'openid' => 'juhe12345678',
-            'key' => 'mock-api-key',
-            'is_sign' => true,
-        ];
-
-        $signParams = [
-            'openid' => 'juhe12345678',
-            'key' => 'mock-api-key',
-            'idcard' => '440701199909091672',
-            'realname' => '张三',
-        ];
-
-        $sign = md5(join('', $signParams));
-
-        $gateway = \Mockery::mock(JuheGateway::class.'[request]', [$config])->shouldAllowMockingProtectedMethods();
-
-        $gateway->shouldReceive('getUrl')->withNoArgs()->andReturn(JuheGateway::ENDPOINT_SIGN_URL);
-        $gateway->shouldReceive('isSign')->withNoArgs()->andReturn(true);
-        $gateway->shouldReceive('generateSign')->with($signParams)->andReturn($sign);
-
-        $gateway->shouldReceive('request')->with(
-            'POST',
-            JuheGateway::ENDPOINT_SIGN_URL,
-            [
-                'form_params' => [
-                    'key' => 'mock-api-key',
-                    'realname' => '张三',
-                    'idcard' => '440701199909091672',
-                    'sign' => $gateway->generateSign($signParams),
-                ],
-                'exceptions' => false,
-            ]
-        )->andReturn([
-            'error_code' => 0,
-            'reason' => '成功',
-            'result' => [
-                'realname' => '张三',
-                'idcard' => '440701199909091672',
-                'res' => 2,
-                'orderid' => 'J103201712261751495244',
-            ],
-        ]);
-
-        $config = new Config($config);
-
-        $this->setExpectedException(InvalidIdentityException::class, 'Invalid identity');
         $gateway->verify('张三', '440701199909091672', $config);
     }
 }

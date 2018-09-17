@@ -10,11 +10,10 @@
 
 namespace JimChen\Identity\Gateways;
 
-use JimChen\Identity\Exceptions\InvalidIdentityException;
-use JimChen\Identity\Exceptions\InvalidArgumentException;
-use JimChen\Identity\Exceptions\GatewayErrorException;
 use JimChen\Identity\Support\Config;
 use JimChen\Identity\Traits\HasHttpRequest;
+use JimChen\Identity\Exceptions\GatewayErrorException;
+use JimChen\Identity\Exceptions\InvalidArgumentException;
 
 class JuheGateway extends Gateway
 {
@@ -33,7 +32,6 @@ class JuheGateway extends Gateway
      *
      * @return array
      *
-     * @throws InvalidIdentityException
      * @throws GatewayErrorException
      * @throws InvalidArgumentException
      */
@@ -61,10 +59,6 @@ class JuheGateway extends Gateway
 
         if (0 != $response['error_code']) {
             throw new GatewayErrorException($response['reason'], $response['error_code'], $response);
-        }
-
-        if (1 != $response['result']['res']) {
-            throw new InvalidIdentityException('Invalid identity', $response['result']['res'], $response['result']);
         }
 
         return $response['result'];
