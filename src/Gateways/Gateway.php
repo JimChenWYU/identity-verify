@@ -42,7 +42,7 @@ abstract class Gateway implements GatewayInterface
      */
     public function getTimeout()
     {
-        return $this->timeout ?: $this->config->get('timeout', self::DEFAULT_TIMEOUT);
+        return $this->timeout ?: $this->timeout = $this->config->get('timeout', self::DEFAULT_TIMEOUT);
     }
 
     /**

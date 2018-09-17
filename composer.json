@@ -27,6 +27,9 @@
         "mockery/mockery": "~0.9"
     },
     "scripts": {
-        "test": "sh vendor/bin/phpunit"
+        "test": [
+            "sh vendor/bin/phpunit",
+            "sh vendor/bin/phpunit --coverage-html ./coverage/"
+        ]
     }
 }
